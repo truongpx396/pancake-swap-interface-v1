@@ -13,7 +13,8 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
 
   // Base tokens for building intermediary trading routes
   const bases: Token[] = useMemo(() => (chainId ? BASES_TO_CHECK_TRADES_AGAINST[chainId] : []), [chainId])
-
+  console.log("======AllCommonPairs========");
+  console.log("BASE_TO_CHECK",chainId ? BASES_TO_CHECK_TRADES_AGAINST[chainId]:[]);
   // All pairs from base tokens
   const basePairs: [Token, Token][] = useMemo(
     () =>
@@ -22,6 +23,7 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
       ),
     [bases]
   )
+  console.log("basePairs: ",basePairs);
 
   const [tokenA, tokenB] = chainId
     ? [wrappedCurrency(currencyA, chainId), wrappedCurrency(currencyB, chainId)]
@@ -62,7 +64,12 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
     [tokenA, tokenB, bases, basePairs, chainId]
   )
 
+  console.log("allPairCombinations: ",allPairCombinations);
+
+
   const allPairs = usePairs(allPairCombinations)
+  console.log("allPairs: ",allPairs);
+
 
   // only pass along valid pairs, non-duplicated pairs
   return useMemo(
@@ -86,11 +93,18 @@ function useAllCommonPairs(currencyA?: Currency, currencyB?: Currency): Pair[] {
  */
 export function useTradeExactIn(currencyAmountIn?: CurrencyAmount, currencyOut?: Currency): Trade | null {
   const allowedPairs = useAllCommonPairs(currencyAmountIn?.currency, currencyOut)
-
   return useMemo(() => {
     if (currencyAmountIn && currencyOut && allowedPairs.length > 0) {
+      console.log("AllowedPairs: ",allowedPairs);
+      const trade=Trade.bestTradeExactIn(allowedPairs, currencyAmountIn, currencyOut, { maxHops: 3, maxNumResults: 1 })[0] ?? null;
+      console.log("Trade ExecutionPrice",trade.executionPrice.toSignificant());
+      console.log("Trade nextMidPrice",trade.nextMidPrice.toSignificant());
+      console.log("Trade outputAmount",trade.outputAmount.toSignificant());
+      console.log("Trade routeMidPrice",trade.route?.midPrice.toSignificant());
+      console.log("Trade priceImpact",trade.priceImpact.toSignificant());
+      console.log("Trade: ",trade);
       return (
-        Trade.bestTradeExactIn(allowedPairs, currencyAmountIn, currencyOut, { maxHops: 3, maxNumResults: 1 })[0] ?? null
+        trade
       )
     }
     return null
